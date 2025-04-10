@@ -3,6 +3,19 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+#Ansible
+*.retry
+*.log
+
+#SSH
+*.yml
+*.env
+credentials/
+vault.yml
+
+#Backup config file
+backups/
+
 # C extensions
 *.so
 
