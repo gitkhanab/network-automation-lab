@@ -1,1 +1,22 @@
-
+---
+- name: Configure rotuer
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Backup config
+      ios_command:
+        commands:
+          - show running-config
+      register: output
+    - name: Save File
+      copy:
+        content: "{{ ouput.stdout[0] }}"
+        dest: "backups/{{ inventory_hostname }}_backup.txt"
+    - name: Ping 8.8.8.8
+      ios_command:
+        commands:
+          - ping 8.8.8.8
+      register: ping_output
+    - name: Show Ping
+      debug:
+        var: ping_output.stdout_lines
