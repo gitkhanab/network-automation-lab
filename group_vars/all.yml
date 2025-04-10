@@ -1,5 +1,3 @@
-
-
 vars:
   test_ping: 8.8.8.8
 tasks:
