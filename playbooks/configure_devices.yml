@@ -1,5 +1,5 @@
 ---
-- name: Configure rotuer
+- name: Configure router
   hosts: all
   gather_facts: no
   tasks:
