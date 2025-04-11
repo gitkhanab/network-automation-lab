@@ -30,17 +30,21 @@ jobs:
           python -m pip install --upgrade pip
           pip install "ansible==2.9.27" "paramiko==2.7.1" "cryptography==3.3.2" "six==1.16.0"
           ansible-galaxy collection install cisco.ios
+          
+          # Force install six in ansible's module_utils
+          SIX_PATH=$(python -c "import ansible.module_utils; print(ansible.module_utils.__path__[0])")
+          pip install --target="$SIX_PATH" "six==1.16.0"
+
+      - name: Verify six installation
+        run: |
+          python -c "from ansible.module_utils import six; print('six module found at:', six.__file__)"
+          ansible --version
+          ansible-galaxy collection list
 
       - name: Install SSH dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y sshpass
-
-      - name: Verify Ansible environment
-        run: |
-          python -c "import six; print('six version:', six.__version__)"
-          ansible --version
-          ansible-galaxy collection list
 
       - name: Run Ansible Playbook
         env:
