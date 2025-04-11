@@ -23,14 +23,19 @@ jobs:
       - name: Clean Python environment
         run: |
           pip uninstall -y ansible ansible-core || true
+          rm -rf ~/.ansible
+          rm -rf ~/.cache/pip
           pip cache purge
 
-      - name: Install Modern Ansible
+      - name: Install Modern Ansible Stack
         run: |
           python -m pip install --upgrade pip
-          pip install "ansible-core>=2.14" "ansible>=7.0"
+          pip install "ansible-core==2.14.10" "ansible==8.6.0"
           pip install paramiko
-          ansible-galaxy collection install cisco.ios
+          
+          # Install Cisco IOS collection directly (bypass ansible-galaxy if needed)
+          mkdir -p ~/.ansible/collections/ansible_collections/cisco/ios
+          git clone https://github.com/ansible-collections/cisco.ios.git ~/.ansible/collections/ansible_collections/cisco/ios
 
       - name: Install SSH dependencies
         run: |
@@ -40,7 +45,8 @@ jobs:
       - name: Verify environment
         run: |
           ansible --version
-          ansible-galaxy collection list
+          python -c "from ansible.utils.collection_loader import AnsibleCollectionLoader; print('Collections loader working')"
+          ls -la ~/.ansible/collections/ansible_collections/cisco/ios
 
       - name: Run Ansible Playbook
         env:
