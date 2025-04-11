@@ -2,8 +2,11 @@
 - name: Configure and backup router
   hosts: all
   gather_facts: no
+  vars_files:
+    - ../group_vars/all.yml
+  
   tasks:
-    - name:
+    - name: Create backups directory
       ansible.builtin.file:
         path: "backups/"
         state: directory
@@ -15,20 +18,28 @@
         commands:
           - show running-config
       register: config_output
+      tags: backup
+      
+    - name: Verify config was captured
+      assert:
+        that:
+          - config_output.stdout[0] | length > 1000
+        fail_msg: "Config backup appears incomplete"
       
     - name: Save config File
       ansible.builtin.copy:
         content: "{{ config_output.stdout[0] }}"
         dest: "backups/{{ inventory_hostname }}_backup-{{ ansible_date_time.date }}.txt"
       delegate_to: localhost
+      tags: backup
       
-    - name: Ping 8.8.8.8
-      ios_command:
+    - name: Ping test server
+      cisco.ios.ios_command:
         commands:
-          - ping 8.8.8.8 repeat 4
+          - ping {{ test_ping }} repeat 4
       register: ping_test
       failed_when: "'!!' not in ping_test.stdout[0]"
       
-    - name: Show Ping
+    - name: Show Ping results
       debug:
         var: ping_test.stdout_lines
