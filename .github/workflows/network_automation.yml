@@ -28,17 +28,19 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install ansible paramiko
-          ansible-galaxy collection install cisco.ios
+          sudo apt-get update
           sudo apt-get install -y sshpass
+          pip install --upgrade pip
+          pip install ansible==2.9.27 paramiko
+          ansible-galaxy collection install cisco.ios
 
       - name: Run Ansible Playbook
         env:
+          ANSIBLE_CONFIG: "$GITHUB_WORKSPACE/ansible.cfg"
           ANSIBLE_USER: ${{ secrets.ANSIBLE_USER }}
           ANSIBLE_PASSWORD: ${{ secrets.ANSIBLE_PASSWORD }}
-          ANSIBLE_HOST_KEY_CHECKING: "False"
         run: |
-          ansible-playbook -i inventory/production.yml playbooks/configure_devices.yml
+          ansible-playbook -i inventory/production.yml playbooks/configure_devices.yml -vvv
 
       - name: Commit and Push Backups
         run: |
