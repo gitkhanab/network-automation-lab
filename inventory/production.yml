@@ -6,7 +6,7 @@ all:
       ansible_network_os: ios
       ansible_user: "{{ lookup('env', 'ANSIBLE_USER') }}"
       ansible_password: "{{ lookup('env', 'ANSIBLE_PASSWORD') }}"
-      ansible_ssh_common_args: "-oKexAlgorithms=diffie-hellman-group-exchange-sha1,diffie-hellman-group14-sha1,diffie-hellman-group1-sha1"
+      ansible_ssh_common_args: "-oKexAlgorithms=diffie-hellman-group-exchange-sha1,diffie-hellman-group14-sha1,diffie-hellman-group1-sha1 -oCiphers=aes256-cbc,aes192-cbc,aes128-cbc,3des-cbc"
       ansible_become: yes
       ansible_become_method: enable
 
