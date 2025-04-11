@@ -10,11 +10,12 @@ all:
       ansible_become: yes
       ansible_become_method: enable
       ansible_ssh_transport: paramiko
-      ansible_ssh_common_args: >
+      ansible_ssh_args: >
         -oKexAlgorithms=diffie-hellman-group-exchange-sha1,diffie-hellman-group14-sha1,diffie-hellman-group1-sha1
         -oCiphers=aes256-cbc,aes192-cbc,aes128-cbc,3des-cbc
         -oHostKeyAlgorithms=ssh-rsa
         -oPubkeyAcceptedAlgorithms=+ssh-rsa
+        -oConnectTimeout=60
       ansible_command_timeout: 60
       ansible_persistent_connect_timeout: 60
       ansible_persistent_command_timeout: 60
