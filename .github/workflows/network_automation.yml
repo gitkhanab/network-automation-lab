@@ -1,44 +1,47 @@
+name: Network Automation
+
 on:
   push:
     branches: [ "main" ]
   schedule:
-    - cron: "0 3 * * 1" 
+    - cron: "0 3 * * 1"  # Weekly at 3 AM Monday
 
 jobs:
   configure-network:
-    runs-on: [self-hosted, network-lab-runner] 
+    runs-on: [self-hosted, network-lab-runner]
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
 
-      - name: Install Ansible
-        run: pip install ansible
-
-      - name: Install Ansible with dependencies
+      - name: Clean Python environment
         run: |
-          pip install ansible ansible-pylibssh
+          pip uninstall -y ansible ansible-core ansible-pylibssh paramiko || true
+          pip cache purge
+
+      - name: Install stable Ansible stack
+        run: |
+          python -m pip install --upgrade pip
+          pip install "ansible==2.9.27" "paramiko==2.7.1" "cryptography==3.3.2"
           ansible-galaxy collection install cisco.ios
 
-      - name: Install dependencies
+      - name: Install SSH dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y sshpass
-          pip install --upgrade pip
-          pip install ansible==2.9.27 paramiko
-          ansible-galaxy collection install cisco.ios
 
       - name: Run Ansible Playbook
         env:
           ANSIBLE_CONFIG: "$GITHUB_WORKSPACE/ansible.cfg"
           ANSIBLE_USER: ${{ secrets.ANSIBLE_USER }}
           ANSIBLE_PASSWORD: ${{ secrets.ANSIBLE_PASSWORD }}
+          ANSIBLE_HOST_KEY_CHECKING: "False"
         run: |
           ansible-playbook -i inventory/production.yml playbooks/configure_devices.yml -vvv
 
