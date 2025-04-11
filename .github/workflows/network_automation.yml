@@ -30,17 +30,13 @@ jobs:
       - name: Install Compatible Ansible Stack
         run: |
           python -m pip install --upgrade pip
-          # Install compatible versions (either Option 1 or Option 2)
+          # Install compatible versions
+          pip install "ansible-core==2.15.6" "ansible==8.6.0"
+          pip install paramiko
           
-          # Option 1: Newer stable versions (recommended)
-          pip install "ansible-core==2.15.6" "ansible==8.6.0" "paramiko==3.4.0"
-          
-          # Option 2: If you specifically need older versions
-          # pip install "ansible-core==2.12.10" "ansible==6.6.0" "paramiko==2.12.0"
-          
-          # Install Cisco IOS collection (multiple fallback methods)
-          mkdir -p ~/.ansible/collections/ansible_collections/cisco
-          ansible-galaxy collection install cisco.ios -p ~/.ansible/collections || \
+          # Install Cisco IOS collection with fallback
+          mkdir -p ~/.ansible/collections/ansible_collections/cisco/ios
+          ansible-galaxy collection install cisco.ios || \
           git clone https://github.com/ansible-collections/cisco.ios.git ~/.ansible/collections/ansible_collections/cisco/ios || \
           echo "Warning: Collection installation failed"
 
@@ -51,21 +47,9 @@ jobs:
 
       - name: Verify environment
         run: |
-          echo "### Ansible Version ###"
           ansible --version
-          
-          echo "### Python Paths ###"
-          python -c "import sys; print('\n'.join(sys.path))"
-          
-          echo "### Collection Verification ###"
+          python -c "from ansible.utils.collection_loader import AnsibleCollectionLoader; print('Collections loader working')"
           ls -la ~/.ansible/collections/ansible_collections/cisco/ios
-          python -c "
-          try:
-              from ansible.utils.collection_loader import AnsibleCollectionLoader
-              print('Collection loader working')
-          except Exception as e:
-              print(f'Collection loader check failed: {str(e)}')
-          "
 
       - name: Run Ansible Playbook
         env:
@@ -73,7 +57,6 @@ jobs:
           ANSIBLE_USER: ${{ secrets.ANSIBLE_USER }}
           ANSIBLE_PASSWORD: ${{ secrets.ANSIBLE_PASSWORD }}
           ANSIBLE_HOST_KEY_CHECKING: "False"
-          ANSIBLE_PYTHON_INTERPRETER: "auto_silent"
         run: |
           ansible-playbook -i inventory/production.yml playbooks/configure_devices.yml -vvv
 
