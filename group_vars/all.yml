@@ -1,5 +1,2 @@
-vars:
-  test_ping: 8.8.8.8
-
-        
-        
+---
+test_ping: 8.8.8.8
