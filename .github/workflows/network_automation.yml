@@ -36,7 +36,21 @@ jobs:
           ANSIBLE_PASSWORD: ${{ secrets.ANSIBLE_PASSWORD }}
           ANSIBLE_HOST_KEY_CHECKING: "False"
         run: |
-          ansible-playbook -i inventory/production.yml playbooks/configure_devices.yml
+          # First verify basic SSH connectivity
+          echo "=== Testing Raw SSH Connection ==="
+          sshpass -p "${{ secrets.ANSIBLE_PASSWORD }}" ssh \
+            -v \
+            -o StrictHostKeyChecking=no \
+            -o KexAlgorithms=diffie-hellman-group-exchange-sha1,diffie-hellman-group14-sha1,diffie-hellman-group1-sha1 \
+            -o Ciphers=aes256-cbc,aes192-cbc,aes128-cbc,3des-cbc \
+            -o HostKeyAlgorithms=ssh-rsa \
+            -o PubkeyAcceptedAlgorithms=+ssh-rsa \
+            ${{ secrets.ANSIBLE_USER }}@192.168.122.2 "show version"
+    
+          # Then run with maximum verbosity
+          echo "=== Running Playbook with Debug ==="
+          ansible-playbook -vvvv -i inventory/production.yml playbooks/configure_devices.yml
+
 
       - name: Commit and Push Backups
         run: |
