@@ -27,7 +27,7 @@ jobs:
           ANSIBLE_PASSWORD: ${{ secrets.ANSIBLE_PASSWORD }}
           ANSIBLE_HOST_KEY_CHECKING: "False" 
         run: |
-          ansible-playbook -i inventory/production.ini playbooks/configure_devices.yml
+          ansible-playbook -i inventory/production.yml playbooks/configure_devices.yml
 
       - name: Commit and Push Backups
         run: |
