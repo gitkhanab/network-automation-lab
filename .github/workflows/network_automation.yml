@@ -22,19 +22,25 @@ jobs:
 
       - name: Clean Python environment
         run: |
-          pip uninstall -y ansible ansible-core ansible-pylibssh paramiko || true
+          pip uninstall -y ansible ansible-core ansible-pylibssh paramiko cryptography six || true
           pip cache purge
 
       - name: Install stable Ansible stack
         run: |
           python -m pip install --upgrade pip
-          pip install "ansible==2.9.27" "paramiko==2.7.1" "cryptography==3.3.2"
+          pip install "ansible==2.9.27" "paramiko==2.7.1" "cryptography==3.3.2" "six==1.16.0"
           ansible-galaxy collection install cisco.ios
 
       - name: Install SSH dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y sshpass
+
+      - name: Verify Ansible environment
+        run: |
+          python -c "import six; print('six version:', six.__version__)"
+          ansible --version
+          ansible-galaxy collection list
 
       - name: Run Ansible Playbook
         env:
