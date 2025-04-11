@@ -10,7 +10,7 @@
       register: output
     - name: Save File
       copy:
-        content: "{{ ouput.stdout[0] }}"
+        content: "{{ output.stdout[0] }}"
         dest: "backups/{{ inventory_hostname }}_backup.txt"
     - name: Ping 8.8.8.8
       ios_command:
