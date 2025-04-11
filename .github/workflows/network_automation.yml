@@ -27,7 +27,7 @@ jobs:
           rm -rf ~/.cache/pip
           pip cache purge
 
-      - name: Install Ansible 2.9 with dependencies
+      - name: Install Ansible with dependencies
         run: |
           python -m pip install --upgrade pip
           pip install "ansible==2.9.27" "paramiko==2.7.1" "cryptography==3.3.2" "six==1.16.0"
@@ -35,14 +35,19 @@ jobs:
           # Create complete six module structure
           SIX_PATH=$(python -c "import ansible.module_utils; print(ansible.module_utils.__path__[0])")
           mkdir -p "$SIX_PATH/six/moves"
+          
+          # Create proper __init__.py files
           cat > "$SIX_PATH/six/__init__.py" <<EOF
           from __future__ import absolute_import
           from six import *
           EOF
-          touch "$SIX_PATH/six/moves/__init__.py"
+          
+          cat > "$SIX_PATH/six/moves/__init__.py" <<EOF
+          from six.moves import *
+          EOF
           
           # Verify installation
-          python -c "from ansible.module_utils.six.moves import urllib; print('Six.moves import successful')"
+          python -c "from ansible.module_utils.six.moves import configparser, urllib; print('Six.moves imports successful')"
 
       - name: Install Cisco IOS collection
         run: |
@@ -56,10 +61,9 @@ jobs:
 
       - name: Verify environment
         run: |
-          python -c "from ansible.module_utils.six.moves import urllib; print('Six.moves verification successful')"
+          python -c "from ansible.module_utils.six.moves import configparser, urllib; print('Six.moves verification successful')"
           ansible --version
           ansible-galaxy collection list
-          ls -la ~/.ansible/collections/ansible_collections/cisco/ios
 
       - name: Run Ansible Playbook
         env:
@@ -68,7 +72,6 @@ jobs:
           ANSIBLE_PASSWORD: ${{ secrets.ANSIBLE_PASSWORD }}
           ANSIBLE_HOST_KEY_CHECKING: "False"
           ANSIBLE_PYTHON_INTERPRETER: "/usr/bin/python3"
-          ANSIBLE_LIBRARY: "/home/runner/.ansible/collections/ansible_collections/cisco/ios/plugins/modules"
         run: |
           ansible-playbook -i inventory/production.yml playbooks/configure_devices.yml -vvv
 
