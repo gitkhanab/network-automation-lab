@@ -23,28 +23,36 @@ jobs:
       - name: Clean Python environment
         run: |
           pip uninstall -y ansible ansible-core ansible-pylibssh paramiko cryptography six || true
+          rm -rf ~/.ansible
+          rm -rf ~/.cache/pip
           pip cache purge
 
-      - name: Install stable Ansible stack
+      - name: Install Ansible 2.9 with dependencies
         run: |
           python -m pip install --upgrade pip
           pip install "ansible==2.9.27" "paramiko==2.7.1" "cryptography==3.3.2" "six==1.16.0"
-          ansible-galaxy collection install cisco.ios
           
-          # Force install six in ansible's module_utils
+          # Manually install six in Ansible's module_utils
           SIX_PATH=$(python -c "import ansible.module_utils; print(ansible.module_utils.__path__[0])")
-          pip install --target="$SIX_PATH" "six==1.16.0"
+          mkdir -p "$SIX_PATH/six"
+          curl -L https://files.pythonhosted.org/packages/71/39/171f1c67cd00715f190ba0b100d606d440a28c93c7714febeca8b79af85e/six-1.16.0-py2.py3-none-any.whl -o six.whl
+          unzip six.whl -d "$SIX_PATH"
+          rm six.whl
 
-      - name: Verify six installation
+      - name: Install Cisco IOS collection
         run: |
-          python -c "from ansible.module_utils import six; print('six module found at:', six.__file__)"
-          ansible --version
-          ansible-galaxy collection list
+          ansible-galaxy collection install cisco.ios -p ~/.ansible/collections
 
       - name: Install SSH dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y sshpass
+
+      - name: Verify environment
+        run: |
+          python -c "from ansible.module_utils import six; print('six module found at:', six.__file__)"
+          ansible --version
+          ansible-galaxy collection list
 
       - name: Run Ansible Playbook
         env:
@@ -52,6 +60,7 @@ jobs:
           ANSIBLE_USER: ${{ secrets.ANSIBLE_USER }}
           ANSIBLE_PASSWORD: ${{ secrets.ANSIBLE_PASSWORD }}
           ANSIBLE_HOST_KEY_CHECKING: "False"
+          ANSIBLE_PYTHON_INTERPRETER: "/usr/bin/python3"
         run: |
           ansible-playbook -i inventory/production.yml playbooks/configure_devices.yml -vvv
 
