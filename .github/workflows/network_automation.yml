@@ -32,15 +32,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install "ansible==2.9.27" "paramiko==2.7.1" "cryptography==3.3.2" "six==1.16.0"
           
-          # Manually install six in Ansible's module_utils
+          # Fix six module installation
           SIX_PATH=$(python -c "import ansible.module_utils; print(ansible.module_utils.__path__[0])")
-          mkdir -p "$SIX_PATH/six"
-          curl -L https://files.pythonhosted.org/packages/71/39/171f1c67cd00715f190ba0b100d606d440a28c93c7714febeca8b79af85e/six-1.16.0-py2.py3-none-any.whl -o six.whl
-          unzip six.whl -d "$SIX_PATH"
-          rm six.whl
+          mkdir -p "$SIX_PATH/six/moves"
+          touch "$SIX_PATH/six/__init__.py"
+          touch "$SIX_PATH/six/moves/__init__.py"
+          
+          # Verify installation
+          python -c "from ansible.module_utils.six.moves import urllib; print('Six.moves import successful')"
 
       - name: Install Cisco IOS collection
         run: |
+          mkdir -p ~/.ansible/collections
           ansible-galaxy collection install cisco.ios -p ~/.ansible/collections
 
       - name: Install SSH dependencies
@@ -50,9 +53,10 @@ jobs:
 
       - name: Verify environment
         run: |
-          python -c "from ansible.module_utils import six; print('six module found at:', six.__file__)"
+          python -c "from ansible.module_utils.six.moves import urllib; print('Six.moves verification successful')"
           ansible --version
           ansible-galaxy collection list
+          ls -la ~/.ansible/collections/ansible_collections/cisco/ios
 
       - name: Run Ansible Playbook
         env:
