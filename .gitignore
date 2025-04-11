@@ -13,9 +13,6 @@ __pycache__/
 credentials/
 vault.yml
 
-#Backup config file
-backups/
-
 # C extensions
 *.so
 
