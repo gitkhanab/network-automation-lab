@@ -21,6 +21,7 @@ jobs:
       - name: Install Legacy-Compatible Packages
         run: |
           python -m pip install --upgrade pip
+          pip uninstall -y ansible ansible-core
           pip install ansible-core==2.12.10 paramiko==2.7.1
           ansible-galaxy collection install cisco.ios:==4.5.0
           pip install sshpass
@@ -41,7 +42,12 @@ jobs:
           ANSIBLE_PARAMIKO_LOOK_FOR_KEYS: "False"
           ANSIBLE_SSH_ARGS: "-oKexAlgorithms=diffie-hellman-group-exchange-sha1,diffie-hellman-group14-sha1,diffie-hellman-group1-sha1 -oCiphers=aes256-cbc,aes192-cbc,aes128-cbc,3des-cbc -oHostKeyAlgorithms=ssh-rsa -oPubkeyAcceptedAlgorithms=+ssh-rsa"
         run: |
-          ansible-playbook -vvvv -e "ansible_ssh_transport=paramiko" -i inventory/production.yml playbooks/configure_devices.yml
+          ansible-playbook -vvvv \
+            -e "ansible_connection=ansible.netcommon.network_cli" \
+            -e "ansible_network_os=cisco.ios.ios" \
+            -e "ansible_ssh_transport=paramiko" \
+            -i inventory/production.yml \
+            playbooks/configure_devices.yml
 
       - name: Commit and Push Backups
         run: |
