@@ -18,11 +18,12 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Install Minimal Ansible
+      - name: Install Legacy-Compatible Packages
         run: |
           python -m pip install --upgrade pip
-          pip install ansible paramiko
+          pip install ansible==7.3.0 paramiko==2.7.1
           ansible-galaxy collection install cisco.ios
+          pip install sshpass
 
       - name: Install SSH dependencies
         run: |
@@ -35,27 +36,15 @@ jobs:
           ANSIBLE_USER: ${{ secrets.ANSIBLE_USER }}
           ANSIBLE_PASSWORD: ${{ secrets.ANSIBLE_PASSWORD }}
           ANSIBLE_HOST_KEY_CHECKING: "False"
+          ANSIBLE_SSH_TRANSPORT: "paramiko"
+          ANSIBLE_NETWORK_CLI_SSH_TYPE: "paramiko"
         run: |
-          # First verify basic SSH connectivity
-          echo "=== Testing Raw SSH Connection ==="
-          sshpass -p "${{ secrets.ANSIBLE_PASSWORD }}" ssh \
-            -v \
-            -o StrictHostKeyChecking=no \
-            -o KexAlgorithms=diffie-hellman-group-exchange-sha1,diffie-hellman-group14-sha1,diffie-hellman-group1-sha1 \
-            -o Ciphers=aes256-cbc,aes192-cbc,aes128-cbc,3des-cbc \
-            -o HostKeyAlgorithms=ssh-rsa \
-            -o PubkeyAcceptedAlgorithms=+ssh-rsa \
-            ${{ secrets.ANSIBLE_USER }}@192.168.122.2 "show version"
-    
-          # Then run with maximum verbosity
-          echo "=== Running Playbook with Debug ==="
-          ansible-playbook -vvvv -i inventory/production.yml playbooks/configure_devices.yml
-
+          ansible-playbook -vvv -i inventory/production.yml playbooks/configure_devices.yml
 
       - name: Commit and Push Backups
         run: |
           git config --global user.name "GitHub Actions"
-          git config --global user.email "coopercopper@gmail.com"
+          git config --global user.email "actions@github.com"
           git add backups/
           git diff-index --quiet HEAD || git commit -m "Automated backup: $(date +'%Y-%m-%d %H:%M:%S')"
           git push
