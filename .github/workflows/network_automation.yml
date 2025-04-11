@@ -25,7 +25,6 @@ jobs:
         env:
           ANSIBLE_USER: ${{ secrets.ANSIBLE_USER }}
           ANSIBLE_PASSWORD: ${{ secrets.ANSIBLE_PASSWORD }}
-          ANSIBLE_HOST_KEY_CHECKING: "False" 
         run: |
           ansible-playbook -i inventory/production.yml playbooks/configure_devices.yml
 
