@@ -22,37 +22,15 @@ jobs:
 
       - name: Clean Python environment
         run: |
-          pip uninstall -y ansible ansible-core ansible-pylibssh paramiko cryptography six || true
-          rm -rf ~/.ansible
-          rm -rf ~/.cache/pip
+          pip uninstall -y ansible ansible-core || true
           pip cache purge
 
-      - name: Install Ansible with dependencies
+      - name: Install Modern Ansible
         run: |
           python -m pip install --upgrade pip
-          pip install "ansible==2.9.27" "paramiko==2.7.1" "cryptography==3.3.2" "six==1.16.0"
-          
-          # Create complete six module structure
-          SIX_PATH=$(python -c "import ansible.module_utils; print(ansible.module_utils.__path__[0])")
-          mkdir -p "$SIX_PATH/six/moves"
-          
-          # Create proper __init__.py files
-          cat > "$SIX_PATH/six/__init__.py" <<EOF
-          from __future__ import absolute_import
-          from six import *
-          EOF
-          
-          cat > "$SIX_PATH/six/moves/__init__.py" <<EOF
-          from six.moves import *
-          EOF
-          
-          # Verify installation
-          python -c "from ansible.module_utils.six.moves import configparser, urllib; print('Six.moves imports successful')"
-
-      - name: Install Cisco IOS collection
-        run: |
-          mkdir -p ~/.ansible/collections
-          ansible-galaxy collection install cisco.ios -p ~/.ansible/collections
+          pip install "ansible-core>=2.14" "ansible>=7.0"
+          pip install paramiko
+          ansible-galaxy collection install cisco.ios
 
       - name: Install SSH dependencies
         run: |
@@ -61,7 +39,6 @@ jobs:
 
       - name: Verify environment
         run: |
-          python -c "from ansible.module_utils.six.moves import configparser, urllib; print('Six.moves verification successful')"
           ansible --version
           ansible-galaxy collection list
 
@@ -71,7 +48,6 @@ jobs:
           ANSIBLE_USER: ${{ secrets.ANSIBLE_USER }}
           ANSIBLE_PASSWORD: ${{ secrets.ANSIBLE_PASSWORD }}
           ANSIBLE_HOST_KEY_CHECKING: "False"
-          ANSIBLE_PYTHON_INTERPRETER: "/usr/bin/python3"
         run: |
           ansible-playbook -i inventory/production.yml playbooks/configure_devices.yml -vvv
 
