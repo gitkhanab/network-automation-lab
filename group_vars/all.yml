@@ -1,9 +1,5 @@
 vars:
   test_ping: 8.8.8.8
-tasks:
-  - name: Ping 8.8.8.8
-    ios_command:
-      commands:
-        - "ping {{test_ping}}"
+
         
         
