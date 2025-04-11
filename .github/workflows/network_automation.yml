@@ -2,7 +2,7 @@ name: Network Automation
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   schedule:
     - cron: "0 3 * * 1"  # Weekly at 3 AM Monday
 
@@ -12,44 +12,22 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
 
-      - name: Clean Python environment
-        run: |
-          pip uninstall -y ansible ansible-core || true
-          rm -rf ~/.ansible
-          rm -rf ~/.cache/pip
-          pip cache purge
-
-      - name: Install Compatible Ansible Stack
+      - name: Install Minimal Ansible
         run: |
           python -m pip install --upgrade pip
-          # Install compatible versions
-          pip install "ansible-core==2.15.6" "ansible==8.6.0"
-          pip install paramiko
-          
-          # Install Cisco IOS collection with fallback
-          mkdir -p ~/.ansible/collections/ansible_collections/cisco/ios
-          ansible-galaxy collection install cisco.ios || \
-          git clone https://github.com/ansible-collections/cisco.ios.git ~/.ansible/collections/ansible_collections/cisco/ios || \
-          echo "Warning: Collection installation failed"
+          pip install ansible paramiko
+          ansible-galaxy collection install cisco.ios
 
       - name: Install SSH dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y sshpass
-
-      - name: Verify environment
-        run: |
-          ansible --version
-          python -c "from ansible.utils.collection_loader import AnsibleCollectionLoader; print('Collections loader working')"
-          ls -la ~/.ansible/collections/ansible_collections/cisco/ios
 
       - name: Run Ansible Playbook
         env:
@@ -58,7 +36,7 @@ jobs:
           ANSIBLE_PASSWORD: ${{ secrets.ANSIBLE_PASSWORD }}
           ANSIBLE_HOST_KEY_CHECKING: "False"
         run: |
-          ansible-playbook -i inventory/production.yml playbooks/configure_devices.yml -vvv
+          ansible-playbook -i inventory/production.yml playbooks/configure_devices.yml
 
       - name: Commit and Push Backups
         run: |
