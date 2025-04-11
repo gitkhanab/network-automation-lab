@@ -32,10 +32,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install "ansible==2.9.27" "paramiko==2.7.1" "cryptography==3.3.2" "six==1.16.0"
           
-          # Fix six module installation
+          # Create complete six module structure
           SIX_PATH=$(python -c "import ansible.module_utils; print(ansible.module_utils.__path__[0])")
           mkdir -p "$SIX_PATH/six/moves"
-          touch "$SIX_PATH/six/__init__.py"
+          cat > "$SIX_PATH/six/__init__.py" <<EOF
+          from __future__ import absolute_import
+          from six import *
+          EOF
           touch "$SIX_PATH/six/moves/__init__.py"
           
           # Verify installation
@@ -65,6 +68,7 @@ jobs:
           ANSIBLE_PASSWORD: ${{ secrets.ANSIBLE_PASSWORD }}
           ANSIBLE_HOST_KEY_CHECKING: "False"
           ANSIBLE_PYTHON_INTERPRETER: "/usr/bin/python3"
+          ANSIBLE_LIBRARY: "/home/runner/.ansible/collections/ansible_collections/cisco/ios/plugins/modules"
         run: |
           ansible-playbook -i inventory/production.yml playbooks/configure_devices.yml -vvv
 
